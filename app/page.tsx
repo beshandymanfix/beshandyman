@@ -1,5 +1,27 @@
 import React from 'react';
 
+// NEW: This is the Open Graph Metadata for link previews
+export const metadata = {
+  title: 'Bes Handyman | San Antonio',
+  description: 'Professional home repairs, mounting, electrical, and smart home tech by a Full Stack Engineer.',
+  openGraph: {
+    title: 'Bes Handyman | Professional Repairs',
+    description: 'Serving San Antonio, Timberwood Park, Kyle, and Austin. Get it done with engineering precision.',
+    url: 'https://beshandyman.com',
+    siteName: 'Bes Handyman',
+    images: [
+      {
+        url: 'https://beshandyman.com/beshandyman.jpg', // Points to your gold foil logo
+        width: 1200, // Standard width for iMessage/Facebook previews
+        height: 800, // Standard height
+        alt: 'Bes Handyman Gold Logo',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+};
+
 export default function Home() {
   // Local SEO Schema
   const jsonLd = {
