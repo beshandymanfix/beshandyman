@@ -43,7 +43,7 @@ jobs:
           static_site_generator: next
 
       - name: Build Next.js Static Export
-        run: npx next build && npx next export
+        run: npx next build 
         env:
           # Injects your secure Instagram token into the Next.js build environment
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
