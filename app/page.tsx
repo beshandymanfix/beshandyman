@@ -30,7 +30,7 @@ export default function Home() {
     "name": "Bes Handyman",
     "image": "https://beshandyman.com/beshandyman.jpg",
     "url": "https://beshandyman.com",
-    "telephone": "+1-210-000-0000", // Update with your actual phone number
+    "telephone": "+1-210-693-1422", // Update with your actual phone number
     "address": {
       "@type": "PostalAddress",
       "addressLocality": "San Antonio",
@@ -90,9 +90,12 @@ export default function Home() {
           Serving San Antonio, Timberwood Park, and the surrounding areas. 
           Get your mounting, electrical, and exterior home repairs done with engineering precision.
         </p>
+
+
+
         <div className="flex flex-col sm:flex-row gap-4">
           <a 
-            href="sms:+12100000000" // Update with your number
+            href="sms:+12108386631" // Update with your number
             className="px-8 py-4 bg-[#D4AF37] text-zinc-950 font-bold rounded-lg shadow-lg hover:bg-[#C5A028] hover:shadow-xl transition-all"
           >
             Text for a Quote
@@ -106,6 +109,71 @@ export default function Home() {
             See My Work on IG
           </a>
         </div>
+
+
+<div className="max-w-5xl mx-auto bg-neutral-900 border border-neutral-800 rounded-3xl p-8 sm:p-12 shadow-2xl mb-20 relative overflow-hidden">
+        
+        {/* Subtle background glow effect behind the content */}
+        <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-yellow-500/5 to-transparent pointer-events-none"></div>
+
+        <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-8 sm:gap-12">
+
+          {/* 1. THE CIRCLE PICTURE */}
+          {/* 'shrink-0' stops the image from getting squished on smaller screens */}
+          <div className="shrink-0 relative group">
+             {/* The gold border ring with a subtle glow */}
+             <div className="absolute -inset-1 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full blur opacity-30 group-hover:opacity-50 transition duration-500"></div>
+             
+             {/* The actual image container */}
+            <div className="relative w-40 h-40 sm:w-52 sm:h-52 rounded-full overflow-hidden border-[5px] border-yellow-500 shadow-xl bg-neutral-800">
+              {/* Important: 'object-cover' ensures the image fills the circle without stretching */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/brian.jpg" // Replace with /profile.jpg later if you have a better square photo
+                alt="Bes Handyman Profile"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+
+          {/* 2. THE TEXT CONTENT */}
+          <div className="flex-grow text-center md:text-left">
+             
+             {/* Name & Subtitle */}
+             <h1 className="text-4xl sm:text-6xl font-extrabold text-white tracking-tight">
+               Brian V.
+             </h1>
+             <p className="text-yellow-500 font-medium text-xl sm:text-2xl mt-3">
+               Precision Home Services & Mounting
+             </p>
+
+             {/* Reviews Bubble */}
+             <div className="inline-flex items-center gap-2 mt-5 bg-neutral-950/80 px-5 py-2 rounded-full border border-neutral-800/60 shadow-sm">
+               <div className="flex text-yellow-400 text-xl">★ ★ ★ ★ ★</div>
+               <p className="text-white font-bold text-lg">
+                 5.0 <span className="text-gray-400 font-medium text-sm ml-1">(Verified Reviews)</span>
+               </p>
+             </div>
+
+             {/* Bio */}
+             <p className="mt-8 text-gray-300 leading-relaxed text-lg max-w-2xl mx-auto md:mx-0 font-light">
+               Professional home repairs, advanced TV mounting, and smart home electrical. Engineered with absolute precision by a Full Stack Developer turned professional handyman serving San Antonio.
+             </p>
+
+             {/* CTA Button */}
+             <div className="mt-10">
+              <a
+                href="#contact"
+                className="inline-block px-10 py-4 bg-yellow-500 text-black font-bold text-lg rounded-xl hover:bg-yellow-400 transition-all shadow-lg hover:shadow-yellow-500/20 transform hover:-translate-y-1"
+              >
+                Get a Free Quote
+              </a>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      {/* --- NEW CIRCLE PROFILE CARD END --- */}
       </section>
 
       {/* Services Grid (Now 6 Cards) */}
