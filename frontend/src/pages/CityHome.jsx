@@ -128,7 +128,7 @@ export default function CityHome({ user }) {
                     {/* Avatar Column */}
                     <div className="flex-shrink-0 flex flex-col items-center">
                       <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-[#D4AF37] mb-4">
-                        <img src="/brian.jpg" alt={handyman.name} className="w-full h-full object-cover" />
+                        <img src={handyman.profileImage || "/brian.jpg"} alt={handyman.name} className="w-full h-full object-cover" />
                       </div>
                       <div className="text-[#D4AF37] font-bold text-xl">$65/hr</div>
                     </div>
@@ -137,7 +137,9 @@ export default function CityHome({ user }) {
                     <div className="flex-grow">
                       <div className="flex justify-between items-start flex-wrap gap-4">
                         <div>
-                          <h2 className="text-2xl font-bold text-white">{handyman.name}</h2>
+                          <Link to={`/handyman/${handyman._id}`} className="hover:underline decoration-[#D4AF37]">
+                            <h2 className="text-2xl font-bold text-white">{handyman.name}</h2>
+                          </Link>
                           <div className="flex items-center gap-1 text-yellow-500 my-1">
                             {[...Array(5)].map((_, i) => (
                               <span key={i} className={i < Math.round(handyman.averageRating || 0) ? "text-yellow-500" : "text-zinc-600"}>★</span>
@@ -146,6 +148,15 @@ export default function CityHome({ user }) {
                           </div>
                           <div className="text-zinc-400 text-sm mb-4">
                             100% Reliable • ID Verified • {selectedService ? `${handyman.taskCount || 0} ${selectedService} Tasks` : `${handyman.totalReviews || 0} Tasks Completed`}
+                          </div>
+                          {/* Skills in Info Column */}
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {handyman.skills && handyman.skills.slice(0, 3).map((skill, i) => (
+                              <span key={i} className="text-xs bg-zinc-800 text-zinc-300 px-2 py-1 rounded border border-zinc-700">{skill}</span>
+                            ))}
+                            {handyman.skills && handyman.skills.length > 3 && (
+                              <span className="text-xs text-zinc-500 py-1">+{handyman.skills.length - 3} more</span>
+                            )}
                           </div>
                         </div>
                         <button className="bg-[#D4AF37] text-zinc-950 font-bold px-6 py-2 rounded-lg hover:bg-[#C5A028] transition-colors">

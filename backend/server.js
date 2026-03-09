@@ -68,7 +68,7 @@ app.get('/api/users', async (req, res) => {
 });
 
 app.post('/api/users', async (req, res) => {
-  const { name, email, password, skills } = req.body;
+  const { name, email, password, skills, profileImage, gallery } = req.body;
 
   try {
     const userExists = await User.findOne({ email });
@@ -82,6 +82,8 @@ app.post('/api/users', async (req, res) => {
       email,
       password,
       skills: skills || [],
+      profileImage: profileImage || '',
+      gallery: gallery || [],
     });
 
     if (user) {
@@ -90,6 +92,8 @@ app.post('/api/users', async (req, res) => {
         name: user.name,
         email: user.email,
         skills: user.skills,
+        profileImage: user.profileImage,
+        gallery: user.gallery,
         isAdmin: user.isAdmin,
         token: generateToken(user._id),
       });
@@ -113,6 +117,8 @@ app.post('/api/users/login', async (req, res) => {
         name: user.name,
         email: user.email,
         skills: user.skills,
+        profileImage: user.profileImage,
+        gallery: user.gallery,
         isAdmin: user.isAdmin,
         token: generateToken(user._id),
       });
@@ -133,6 +139,8 @@ app.get('/api/users/profile', protect, async (req, res) => {
       name: user.name,
       email: user.email,
       skills: user.skills,
+      profileImage: user.profileImage,
+      gallery: user.gallery,
       isAdmin: user.isAdmin,
     });
   } else {
@@ -155,6 +163,12 @@ app.put('/api/users/profile', protect, async (req, res) => {
     if (req.body.skills !== undefined) {
       user.skills = req.body.skills;
     }
+    if (req.body.profileImage !== undefined) {
+      user.profileImage = req.body.profileImage;
+    }
+    if (req.body.gallery !== undefined) {
+      user.gallery = req.body.gallery;
+    }
 
     const updatedUser = await user.save();
 
@@ -164,11 +178,39 @@ app.put('/api/users/profile', protect, async (req, res) => {
       email: updatedUser.email,
       city: updatedUser.city,
       skills: updatedUser.skills,
+      profileImage: updatedUser.profileImage,
+      gallery: updatedUser.gallery,
       isAdmin: updatedUser.isAdmin,
       token: generateToken(updatedUser._id),
     });
   } else {
     res.status(404).json({ message: 'User not found' });
+  }
+});
+
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    if (user) {
+      const userObj = user.toObject();
+      
+      // Fetch reviews for this user
+      const reviews = await Review.find({ handyman: user._id });
+      userObj.totalReviews = reviews.length;
+      
+      if (userObj.totalReviews > 0) {
+        const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+        userObj.averageRating = sum / userObj.totalReviews;
+      } else {
+        userObj.averageRating = 0;
+      }
+
+      res.json(userObj);
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 

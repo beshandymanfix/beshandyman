@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import Landing from './pages/Landing';
 import CityHome from './pages/CityHome';
 import Services from './pages/Services';
+import HandymanProfile from './pages/HandymanProfile';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -25,6 +26,7 @@ function App() {
           <Route path="/" element={<Landing user={user} />} />
           <Route path="/city/:cityName" element={<CityHome user={user} />} />
           <Route path="/services" element={<Services user={user} />} />
+          <Route path="/handyman/:id" element={<HandymanProfile />} />
           <Route 
             path="/login" 
             element={!user ? <Login setUser={setUser} /> : <Navigate to="/profile" />} 
