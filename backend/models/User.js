@@ -24,6 +24,11 @@ const userSchema = mongoose.Schema(
     type: String,
     required: false,
     },
+    skills: {
+      type: [String],
+      required: false,
+      default: [],
+    },
   },
   {
     timestamps: true,

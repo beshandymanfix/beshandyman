@@ -4,6 +4,7 @@ const path = require('path');
 const cors = require('cors');
 const connectDB = require('./db');
 const User = require('./models/User');
+const Review = require('./models/Review');
 const generateToken = require('./utils/generateToken');
 const { protect } = require('./middleware/authMiddleware');
 
@@ -20,8 +21,54 @@ app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
+app.get('/api/users', async (req, res) => {
+  const { city, skill } = req.query;
+  let query = {};
+
+  if (city) {
+    query.city = city;
+  }
+
+  if (skill) {
+    query.skills = { $in: [skill] };
+  }
+
+  try {
+    const users = await User.find(query).select('-password');
+    
+    const usersWithStats = await Promise.all(users.map(async (user) => {
+      const userObj = user.toObject();
+      
+      // Fetch all reviews to calculate stats
+      const reviews = await Review.find({ handyman: user._id });
+      const totalReviews = reviews.length;
+      userObj.totalReviews = totalReviews;
+      
+      // Calculate Average Rating
+      if (totalReviews > 0) {
+        const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+        userObj.averageRating = sum / totalReviews;
+      } else {
+        userObj.averageRating = 0;
+      }
+      
+      if (skill) {
+        const taskCount = reviews.filter(r => r.service === skill).length;
+        userObj.taskCount = taskCount;
+      } else {
+        userObj.taskCount = totalReviews;
+      }
+      return userObj;
+    }));
+
+    res.json(usersWithStats);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 app.post('/api/users', async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, skills } = req.body;
 
   try {
     const userExists = await User.findOne({ email });
@@ -34,6 +81,7 @@ app.post('/api/users', async (req, res) => {
       name,
       email,
       password,
+      skills: skills || [],
     });
 
     if (user) {
@@ -41,6 +89,7 @@ app.post('/api/users', async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        skills: user.skills,
         isAdmin: user.isAdmin,
         token: generateToken(user._id),
       });
@@ -63,6 +112,7 @@ app.post('/api/users/login', async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        skills: user.skills,
         isAdmin: user.isAdmin,
         token: generateToken(user._id),
       });
@@ -82,6 +132,7 @@ app.get('/api/users/profile', protect, async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      skills: user.skills,
       isAdmin: user.isAdmin,
     });
   } else {
@@ -101,6 +152,9 @@ app.put('/api/users/profile', protect, async (req, res) => {
     if (req.body.city) {
       user.city = req.body.city;
     }
+    if (req.body.skills !== undefined) {
+      user.skills = req.body.skills;
+    }
 
     const updatedUser = await user.save();
 
@@ -109,6 +163,7 @@ app.put('/api/users/profile', protect, async (req, res) => {
       name: updatedUser.name,
       email: updatedUser.email,
       city: updatedUser.city,
+      skills: updatedUser.skills,
       isAdmin: updatedUser.isAdmin,
       token: generateToken(updatedUser._id),
     });

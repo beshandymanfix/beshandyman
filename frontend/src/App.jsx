@@ -4,6 +4,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Home from './pages/Home';
+import Landing from './pages/Landing';
+import CityHome from './pages/CityHome';
+import Services from './pages/Services';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -19,7 +22,9 @@ function App() {
     <Router>
       <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans">
         <Routes>
-          <Route path="/" element={<Home user={user} />} />
+          <Route path="/" element={<Landing user={user} />} />
+          <Route path="/city/:cityName" element={<CityHome user={user} />} />
+          <Route path="/services" element={<Services user={user} />} />
           <Route 
             path="/login" 
             element={!user ? <Login setUser={setUser} /> : <Navigate to="/profile" />} 

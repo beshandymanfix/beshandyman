@@ -1,19 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Profile = ({ user, setUser }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
+  const [skills, setSkills] = useState([]);
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
       setName(user.name);
       setEmail(user.email);
       setCity(user.city || '');
+      setSkills(user.skills || []);
     }
   }, [user]);
+
+  const handleSkillChange = (e) => {
+    const skill = e.target.value;
+    if (e.target.checked) {
+      setSkills([...skills, skill]);
+    } else {
+      setSkills(skills.filter((s) => s !== skill));
+    }
+  };
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -24,7 +37,7 @@ const Profile = ({ user, setUser }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token}`
         },
-        body: JSON.stringify({ name, email, password, city }),
+        body: JSON.stringify({ name, email, password, city, skills }),
       });
       
       const data = await res.json();
@@ -34,6 +47,16 @@ const Profile = ({ user, setUser }) => {
         setUser(data);
         setMessage('Profile Updated Successfully');
         setPassword('');
+
+        // Redirect after a short delay to show the success message
+        setTimeout(() => {
+          if (data.city) {
+            navigate(`/city/${encodeURIComponent(data.city)}`);
+          } else {
+            // If no city is selected, just clear the message
+            setMessage('');
+          }
+        }, 1500); // 1.5 second delay
       } else {
         setMessage(data.message || 'Error updating profile');
       }
@@ -76,13 +99,47 @@ const Profile = ({ user, setUser }) => {
 
           <div className="mb-4">
             <label className="block text-zinc-400 mb-2 text-sm">Preferred City</label>
-            <input
-              type="text"
+            <select
               className="w-full p-3 bg-zinc-950 border border-zinc-800 rounded text-white focus:outline-none focus:border-[#D4AF37]"
-              placeholder="Enter your city"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-            />
+            >
+              <option value="" disabled>Select a city</option>
+              <option value="San Antonio">San Antonio</option>
+              <option value="Austin">Austin</option>
+              <option value="New Braunfels">New Braunfels</option>
+              <option value="Kyle">Kyle</option>
+              <option value="Buda">Buda</option>
+              <option value="San Marcos">San Marcos</option>
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-zinc-400 mb-2 text-sm">Skills</label>
+            <div className="grid grid-cols-1 gap-2 bg-zinc-950 p-3 rounded border border-zinc-800 max-h-60 overflow-y-auto">
+              {[
+                "Furniture Assembly",
+                "Home Cleaning",
+                "Home Repair",
+                "TV Mounting",
+                "Electrical Help",
+                "Painting",
+                "General Mounting",
+                "Help Moving",
+                "Yardwork Service"
+              ].map((skill) => (
+                <label key={skill} className="flex items-center space-x-3 cursor-pointer hover:bg-zinc-900 p-1 rounded">
+                  <input
+                    type="checkbox"
+                    value={skill}
+                    checked={skills.includes(skill)}
+                    onChange={handleSkillChange}
+                    className="w-4 h-4 accent-[#D4AF37] bg-zinc-800 border-zinc-600 rounded focus:ring-[#D4AF37]"
+                  />
+                  <span className="text-zinc-300 text-sm">{skill}</span>
+                </label>
+              ))}
+            </div>
           </div>
 
           <div className="mb-8">
