@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 
-export default function CityHome({ user }) {
+export default function CityHome({ user, setUser }) {
   const { cityName } = useParams();
   const location = useLocation();
   const [handymen, setHandymen] = useState([]);
   const [expandedHandymanId, setExpandedHandymanId] = useState(null);
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
+  const [selectedDate, setSelectedDate] = useState(location.state?.date || '');
+  const [selectedTime, setSelectedTime] = useState(location.state?.time || '');
   const selectedService = location.state?.service;
 
   useEffect(() => {
@@ -26,6 +26,14 @@ export default function CityHome({ user }) {
     };
     fetchHandymen();
   }, [cityName, selectedService]);
+
+  // Sort handymen: Current user first, then others
+  const sortedHandymen = [...handymen].sort((a, b) => {
+    if (user && a._id === user._id) return -1;
+    if (user && b._id === user._id) return 1;
+    // Secondary sort by rating could go here
+    return (b.averageRating || 0) - (a.averageRating || 0);
+  });
 
   // Local SEO Schema
   const jsonLd = {
@@ -71,29 +79,33 @@ export default function CityHome({ user }) {
         </div>
         
         <div className="flex items-center gap-4">
-          {user ? (
-            <span className="hidden md:block font-medium text-zinc-300">
-              Welcome, <span className="text-[#D4AF37]">{user.name}</span>
-            </span>
-          ) : (
-            <a 
-              href="mailto:brian@beshandyman.com" 
-              className="hidden md:block font-medium text-zinc-300 hover:text-[#D4AF37] transition-colors"
-            >
-              brian@beshandyman.com
-            </a>
-          )}
-
           {/* Auth Buttons */}
           {user ? (
-            <Link 
-              to="/profile"
-              className="px-4 py-2 text-sm font-bold text-zinc-950 bg-[#D4AF37] rounded hover:bg-[#C5A028] transition-colors"
-            >
-              Profile
-            </Link>
+            <div className="flex items-center gap-4">
+              <span className="hidden md:block font-medium text-zinc-300">
+                Welcome, <span className="text-[#D4AF37]">{user.name}</span>
+              </span>
+              <Link 
+                to="/profile"
+                className="px-4 py-2 text-sm font-bold text-zinc-950 bg-[#D4AF37] rounded hover:bg-[#C5A028] transition-colors"
+              >
+                Profile
+              </Link>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('userInfo');
+                  setUser(null);
+                }}
+                className="px-4 py-2 text-sm font-bold text-white border border-zinc-700 rounded hover:bg-zinc-800 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
           ) : (
             <>
+              <a href="mailto:brian@beshandyman.com" className="hidden md:block font-medium text-zinc-300 hover:text-[#D4AF37] transition-colors">
+                brian@beshandyman.com
+              </a>
               <Link 
                 to="/login"
                 className="px-4 py-2 text-sm font-bold text-zinc-950 bg-[#D4AF37] rounded hover:bg-[#C5A028] transition-colors"
@@ -113,17 +125,17 @@ export default function CityHome({ user }) {
 
       {/* Booking & Profile Section */}
       <section className="px-4 py-12 max-w-6xl mx-auto">
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col gap-8">
           
           {/* Left Column: Handyman List */}
-          <div className="flex-grow">
+          <div className="w-full">
             <h1 className="text-3xl font-bold mb-6 text-white">
               Select a BesHandyman {selectedService ? `for ${selectedService}` : ''} in {cityName}
             </h1>
             
-            {handymen.length > 0 ? (
+            {sortedHandymen.length > 0 ? (
               <div className="space-y-6">
-                {handymen.map((handyman) => (
+                {sortedHandymen.map((handyman) => (
                   <div key={handyman._id} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl flex flex-col sm:flex-row gap-6">
                     {/* Avatar Column */}
                     <div className="flex-shrink-0 flex flex-col items-center">
@@ -198,70 +210,6 @@ export default function CityHome({ user }) {
                 <p className="text-sm text-zinc-500 mt-2">Try selecting a different service or check back later.</p>
               </div>
             )}
-          </div>
-
-          {/* Right Column: Sidebar */}
-          <div className="w-full lg:w-1/3 flex-shrink-0">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl sticky top-8">
-              <h3 className="text-xl font-bold text-white mb-4">Task Options</h3>
-              
-              {/* Date Selection */}
-              <div className="mb-6">
-                <h4 className="text-sm font-bold text-zinc-400 mb-3 uppercase tracking-wider">Date</h4>
-                <div className="flex flex-wrap gap-2">
-                  {['Today', 'Within 3 Days', 'Within a Week'].map(date => (
-                    <button
-                      key={date}
-                      onClick={() => setSelectedDate(date)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
-                        selectedDate === date 
-                        ? 'bg-[#D4AF37] text-zinc-950 border-[#D4AF37]' 
-                        : 'bg-transparent text-zinc-300 border-zinc-700 hover:border-[#D4AF37]'
-                      }`}
-                    >
-                      {date}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Time Selection */}
-              <div className="mb-8">
-                <h4 className="text-sm font-bold text-zinc-400 mb-3 uppercase tracking-wider">Time of Day</h4>
-                <div className="flex flex-col gap-2">
-                  {[
-                    { label: 'Morning', time: '8am - 12pm' },
-                    { label: 'Afternoon', time: '12pm - 5pm' },
-                    { label: 'Evening', time: '5pm - 9:30pm' }
-                  ].map(item => (
-                    <button
-                      key={item.label}
-                      onClick={() => setSelectedTime(item.label)}
-                      className={`px-4 py-3 rounded-lg text-sm font-medium border flex justify-between items-center transition-all ${
-                        selectedTime === item.label
-                        ? 'bg-[#D4AF37] text-zinc-950 border-[#D4AF37]' 
-                        : 'bg-transparent text-zinc-300 border-zinc-700 hover:border-[#D4AF37]'
-                      }`}
-                    >
-                      <span>{item.label}</span>
-                      <span className="opacity-70 text-xs">{item.time}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Trust Box */}
-              <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 flex items-start gap-3">
-                <div className="text-2xl">🛡️</div>
-                <div>
-                  <p className="text-xs text-zinc-400 leading-relaxed mb-1">
-                    <strong>Always have peace of mind.</strong> All BesHandyman taskers undergo ID and criminal background checks.
-                  </p>
-                  <a href="#" className="text-[#D4AF37] text-xs font-bold hover:underline">Learn more</a>
-                </div>
-              </div>
-
-            </div>
           </div>
         </div>
       </section>

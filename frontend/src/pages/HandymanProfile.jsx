@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 
-const HandymanProfile = () => {
+const HandymanProfile = ({ user, setUser }) => {
   const { id } = useParams();
   const [handyman, setHandyman] = useState(null);
 
@@ -36,7 +36,21 @@ const HandymanProfile = () => {
             Bes<span className="text-white">Handyman</span>
           </div>
         </div>
-        <Link to="/" className="text-zinc-300 hover:text-[#D4AF37]">Back to Home</Link>
+        
+        <div className="flex items-center gap-4">
+          <Link to="/" className="text-zinc-300 hover:text-[#D4AF37]">Back to Home</Link>
+          {user && (
+            <button
+              onClick={() => {
+                localStorage.removeItem('userInfo');
+                setUser(null);
+              }}
+              className="px-4 py-2 text-sm font-bold text-white border border-zinc-700 rounded hover:bg-zinc-800 transition-colors"
+            >
+              Logout
+            </button>
+          )}
+        </div>
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 py-12">
@@ -74,10 +88,16 @@ const HandymanProfile = () => {
 
             <div className="flex-shrink-0 w-full md:w-auto">
               <div className="bg-zinc-950 p-6 rounded-xl border border-zinc-800 text-center">
-                <div className="text-3xl font-bold text-white mb-1">$65<span className="text-sm text-zinc-500 font-normal">/hr</span></div>
-                <button className="w-full mt-4 bg-[#D4AF37] text-zinc-950 font-bold px-8 py-3 rounded-lg hover:bg-[#C5A028] transition-colors">
-                  Select & Book
-                </button>
+                <div className="text-3xl font-bold text-white mb-1">${handyman.hourlyRate || 50}<span className="text-sm text-zinc-500 font-normal">/hr</span></div>
+                {user && user._id === handyman._id ? (
+                  <Link to="/profile" className="block w-full mt-4 bg-zinc-800 text-white font-bold px-8 py-3 rounded-lg hover:bg-zinc-700 transition-colors text-center">
+                    Edit Profile
+                  </Link>
+                ) : (
+                  <button className="w-full mt-4 bg-[#D4AF37] text-zinc-950 font-bold px-8 py-3 rounded-lg hover:bg-[#C5A028] transition-colors">
+                    Select & Book
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -91,15 +111,39 @@ const HandymanProfile = () => {
               {handyman.skills && handyman.skills.length > 0 ? (
                 <div className="space-y-4">
                   {handyman.skills.map((skill, index) => (
-                    <div key={index} className="flex items-start gap-4 p-4 bg-zinc-950/50 rounded-xl border border-zinc-800/50">
-                      <div className="text-2xl">🛠️</div>
-                      <div>
-                        <h3 className="font-bold text-[#D4AF37]">{skill}</h3>
-                        <p className="text-sm text-zinc-400 mt-1">
-                          Experienced in {skill.toLowerCase()}. Equipped with professional tools and ready to assist.
-                        </p>
+                    <Link key={index} to={`/handyman/${handyman._id}/skill/${encodeURIComponent(skill)}`} className="block hover:bg-zinc-800/30 transition-colors rounded-xl">
+                      <div className="flex items-start gap-4 p-4 bg-zinc-950/50 rounded-xl border border-zinc-800/50">
+                        <div className="flex-shrink-0">
+                          {handyman.skillImages && handyman.skillImages[skill] ? (
+                            <img 
+                              src={handyman.skillImages[skill]} 
+                              alt={skill} 
+                              className="w-20 h-20 rounded-lg object-cover border border-zinc-700"
+                            />
+                          ) : (
+                            <div className="w-20 h-20 rounded-lg bg-zinc-900 flex items-center justify-center text-3xl border border-zinc-800">
+                              🛠️
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-grow">
+                          <div className="flex justify-between items-start">
+                            <h3 className="font-bold text-[#D4AF37] text-lg">{skill}</h3>
+                            {handyman.skillRates && handyman.skillRates[skill] && (
+                              <span className="text-zinc-100 font-bold bg-zinc-800 px-3 py-1 rounded-full text-sm border border-zinc-700">
+                                ${handyman.skillRates[skill]}/hr
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-zinc-400 mt-2 leading-relaxed">
+                            Experienced in {skill.toLowerCase()}. Equipped with professional tools and ready to assist.
+                          </p>
+                          <p className="text-xs text-[#D4AF37] mt-2 font-medium">
+                            {handyman.skillCounts && handyman.skillCounts[skill] ? `${handyman.skillCounts[skill]} tasks completed` : 'New to this skill'}
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               ) : (
@@ -109,6 +153,43 @@ const HandymanProfile = () => {
           </div>
 
           {/* Sidebar / Additional Info could go here */}
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold text-white mb-6">Client Reviews ({handyman.totalReviews || 0})</h2>
+          {handyman.reviews && handyman.reviews.length > 0 ? (
+            <div className="space-y-6">
+              {handyman.reviews.map((review) => (
+                <div key={review._id} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-[#D4AF37] font-bold border border-zinc-700">
+                      {review.clientName.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="text-white font-bold text-sm">{review.clientName}</div>
+                      <div className="flex gap-1 text-yellow-500 text-xs">
+                        {[...Array(5)].map((_, i) => (
+                          <span key={i} className={i < review.rating ? "text-yellow-500" : "text-zinc-600"}>★</span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="ml-auto text-zinc-500 text-xs">
+                      {new Date(review.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <p className="text-zinc-300 text-sm leading-relaxed">
+                    {review.comment}
+                  </p>
+                  <div className="mt-2 text-xs text-[#D4AF37] font-medium">
+                    Service: {review.service}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-zinc-500">No reviews yet.</p>
+          )}
         </div>
       </div>
     </div>

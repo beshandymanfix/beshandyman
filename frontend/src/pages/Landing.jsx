@@ -32,10 +32,12 @@ const getStateForCity = (city) => {
   return '';
 };
 
-const Landing = ({ user }) => {
+const Landing = ({ user, setUser }) => {
   const [selectedState, setSelectedState] = useState('');
   const [city, setCity] = useState('');
   const [service, setService] = useState('');
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
   const [availabilityMessage, setAvailabilityMessage] = useState('');
   const navigate = useNavigate();
 
@@ -80,9 +82,9 @@ const Landing = ({ user }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (city) {
-      navigate(`/city/${encodeURIComponent(city)}`, { state: { service } });
+      navigate(`/city/${encodeURIComponent(city)}`, { state: { service, date, time } });
     } else if (service) {
-      navigate(`/services/${service.toLowerCase().replace(/ /g, '-')}`);
+      navigate(`/services/${service.toLowerCase().replace(/ /g, '-')}`, { state: { date, time } });
     } else {
       navigate('/services');
     }
@@ -104,8 +106,8 @@ const Landing = ({ user }) => {
         <div className="flex items-center gap-4">
             {!user ? (
                 <>
-                <Link to="/login" className="text-zinc-300 hover:text-[#D4AF37] font-bold">Sign In</Link>
-                <Link to="/register" className="px-4 py-2 bg-[#D4AF37] text-zinc-950 font-bold rounded hover:bg-[#C5A028]">Register</Link>
+                <Link to="/login" className="text-zinc-300 hover:text-[#D4AF37] font-bold text-sm">Sign In</Link>
+                <Link to="/register" state={{ role: 'client' }} className="px-4 py-2 bg-[#D4AF37] text-zinc-950 font-bold rounded hover:bg-[#C5A028]">Register</Link>
                 </>
             ) : (
                 <div className="flex items-center gap-4">
@@ -113,6 +115,15 @@ const Landing = ({ user }) => {
                     Welcome, <span className="text-[#D4AF37]">{user.name}</span>
                   </span>
                   <Link to="/profile" className="px-4 py-2 bg-[#D4AF37] text-zinc-950 font-bold rounded hover:bg-[#C5A028]">Profile</Link>
+                  <button
+                    onClick={() => {
+                      localStorage.removeItem('userInfo');
+                      setUser(null);
+                    }}
+                    className="px-4 py-2 text-sm font-bold text-white border border-zinc-700 rounded hover:bg-zinc-800 transition-colors"
+                  >
+                    Logout
+                  </button>
                 </div>
             )}
         </div>
@@ -127,8 +138,8 @@ const Landing = ({ user }) => {
           Professional home repairs, mounting, and cleaning services.
         </p>
         
-        <form onSubmit={handleSubmit} className="bg-zinc-900 p-6 rounded-2xl shadow-2xl w-full max-w-4xl border border-zinc-800 flex flex-col md:flex-row gap-4 items-start md:items-end">
-          <div className="w-full md:w-1/4">
+        <form onSubmit={handleSubmit} className="bg-zinc-900 p-6 rounded-2xl shadow-2xl w-full max-w-5xl border border-zinc-800 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div className="w-full">
             <label className="block text-zinc-400 mb-2 text-sm font-bold text-left">State</label>
             <select
               className="w-full p-3 bg-zinc-950 border border-zinc-800 rounded text-white focus:outline-none focus:border-[#D4AF37]"
@@ -142,7 +153,7 @@ const Landing = ({ user }) => {
             </select>
           </div>
 
-          <div className="w-full md:w-1/4">
+          <div className="w-full">
             <label className="block text-zinc-400 mb-2 text-sm font-bold text-left">City</label>
             <select
               className="w-full p-3 bg-zinc-950 border border-zinc-800 rounded text-white focus:outline-none focus:border-[#D4AF37]"
@@ -158,7 +169,7 @@ const Landing = ({ user }) => {
             {availabilityMessage && <p className="text-green-500 text-xs mt-2 text-left">{availabilityMessage}</p>}
           </div>
 
-          <div className="w-full md:w-1/4">
+          <div className="w-full">
             <label className="block text-zinc-400 mb-2 text-sm font-bold text-left">What do you need help with?</label>
             <select
               className="w-full p-3 bg-zinc-950 border border-zinc-800 rounded text-white focus:outline-none focus:border-[#D4AF37]"
@@ -172,7 +183,31 @@ const Landing = ({ user }) => {
             </select>
           </div>
 
-          <div className="w-full md:w-1/4">
+          <div className="w-full">
+            <label className="block text-zinc-400 mb-2 text-sm font-bold text-left">Date</label>
+            <input
+              type="date"
+              className="w-full p-3 bg-zinc-950 border border-zinc-800 rounded text-white focus:outline-none focus:border-[#D4AF37]"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </div>
+
+          <div className="w-full">
+            <label className="block text-zinc-400 mb-2 text-sm font-bold text-left">Time</label>
+            <select
+              className="w-full p-3 bg-zinc-950 border border-zinc-800 rounded text-white focus:outline-none focus:border-[#D4AF37]"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+            >
+              <option value="" disabled>Select Time</option>
+              <option value="Morning">Morning (8am - 12pm)</option>
+              <option value="Afternoon">Afternoon (12pm - 5pm)</option>
+              <option value="Evening">Evening (5pm - 9:30pm)</option>
+            </select>
+          </div>
+
+          <div className="w-full">
             <button type="submit" className="w-full bg-[#D4AF37] text-zinc-950 font-bold p-3 rounded hover:bg-[#C5A028] transition-colors">
               Book Trusted Help
             </button>

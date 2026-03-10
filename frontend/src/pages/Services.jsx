@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const Services = ({ user }) => {
+const Services = ({ user, setUser }) => {
   const categories = [
     {
       title: "Featured Tasks",
@@ -114,7 +114,18 @@ const Services = ({ user }) => {
                 <Link to="/register" className="px-4 py-2 bg-[#D4AF37] text-zinc-950 font-bold rounded hover:bg-[#C5A028]">Register</Link>
                 </>
             ) : (
-                <Link to="/profile" className="px-4 py-2 bg-[#D4AF37] text-zinc-950 font-bold rounded hover:bg-[#C5A028]">Profile</Link>
+                <div className="flex items-center gap-4">
+                  <Link to="/profile" className="px-4 py-2 bg-[#D4AF37] text-zinc-950 font-bold rounded hover:bg-[#C5A028]">Profile</Link>
+                  <button
+                    onClick={() => {
+                      localStorage.removeItem('userInfo');
+                      setUser(null);
+                    }}
+                    className="px-4 py-2 text-sm font-bold text-white border border-zinc-700 rounded hover:bg-zinc-800 transition-colors"
+                  >
+                    Logout
+                  </button>
+                </div>
             )}
         </div>
       </nav>

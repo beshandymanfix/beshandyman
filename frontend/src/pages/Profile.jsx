@@ -6,8 +6,14 @@ const Profile = ({ user, setUser }) => {
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
   const [skills, setSkills] = useState([]);
+  const [profileImage, setProfileImage] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [description, setDescription] = useState('');
+  const [hourlyRate, setHourlyRate] = useState(0);
+  const [skillRates, setSkillRates] = useState({});
+  const [skillImages, setSkillImages] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,6 +22,11 @@ const Profile = ({ user, setUser }) => {
       setEmail(user.email);
       setCity(user.city || '');
       setSkills(user.skills || []);
+      setProfileImage(user.profileImage || '');
+      setDescription(user.description || '');
+      setHourlyRate(user.hourlyRate || 0);
+      setSkillRates(user.skillRates || {});
+      setSkillImages(user.skillImages || {});
     }
   }, [user]);
 
@@ -28,6 +39,63 @@ const Profile = ({ user, setUser }) => {
     }
   };
 
+  const handleSkillRateChange = (skill, rate) => {
+    setSkillRates({ ...skillRates, [skill]: rate });
+  };
+
+  const uploadFileHandler = async (e) => {
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append('image', file);
+    setUploading(true);
+
+    try {
+      const res = await fetch('http://localhost:5000/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.text();
+        setProfileImage(data);
+        setUploading(false);
+      } else {
+        setUploading(false);
+        setMessage('Image upload failed');
+      }
+    } catch (err) {
+      setUploading(false);
+      setMessage('Image upload failed');
+    }
+  };
+
+  const uploadSkillImageHandler = async (e, skill) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('image', file);
+    setUploading(true);
+
+    try {
+      const res = await fetch('http://localhost:5000/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.text();
+        setSkillImages({ ...skillImages, [skill]: data });
+        setUploading(false);
+      } else {
+        setUploading(false);
+        setMessage('Skill image upload failed');
+      }
+    } catch (err) {
+      setUploading(false);
+      setMessage('Skill image upload failed');
+    }
+  };
+
   const submitHandler = async (e) => {
     e.preventDefault();
     try {
@@ -37,7 +105,7 @@ const Profile = ({ user, setUser }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token}`
         },
-        body: JSON.stringify({ name, email, password, city, skills }),
+        body: JSON.stringify({ name, email, password, city, skills, profileImage, description, hourlyRate, skillRates, skillImages }),
       });
       
       const data = await res.json();
@@ -73,10 +141,35 @@ const Profile = ({ user, setUser }) => {
   return (
     <div className="flex flex-col items-center pt-10">
       <div className="bg-zinc-900 p-8 rounded-2xl shadow-2xl w-96 border border-zinc-800">
-        <h2 className="text-3xl mb-6 font-bold text-center text-white">User Profile</h2>
+        <div className="flex flex-col items-center mb-6">
+          <div className="text-5xl mb-2">👤</div>
+          <h2 className="text-3xl font-bold text-center text-white">User Profile</h2>
+        </div>
         {message && <p className="text-green-500 mb-4 text-center text-sm">{message}</p>}
         
         <form onSubmit={submitHandler}>
+          <div className="mb-6">
+            <label className="block text-zinc-400 mb-2 text-sm">Profile Image</label>
+            <div className="flex flex-col items-center gap-4">
+              {profileImage && (
+                <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-[#D4AF37]">
+                  <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+                </div>
+              )}
+              <input
+                type="file"
+                onChange={uploadFileHandler}
+                className="block w-full text-sm text-zinc-400
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-[#D4AF37] file:text-zinc-950
+                  hover:file:bg-[#C5A028] cursor-pointer"
+              />
+              {uploading && <p className="text-sm text-[#D4AF37] animate-pulse">Uploading...</p>}
+            </div>
+          </div>
+
           <div className="mb-4">
             <label className="block text-zinc-400 mb-2 text-sm">Username</label>
             <input
@@ -114,6 +207,32 @@ const Profile = ({ user, setUser }) => {
             </select>
           </div>
 
+          {user && user.role === 'tasker' && (
+            <>
+              <div className="mb-4">
+                <label className="block text-zinc-400 mb-2 text-sm">About You</label>
+                <textarea
+                  rows="3"
+                  className="w-full p-3 bg-zinc-950 border border-zinc-800 rounded text-white focus:outline-none focus:border-[#D4AF37]"
+                  placeholder="Describe your experience..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-zinc-400 mb-2 text-sm">Base Hourly Rate ($)</label>
+                <input
+                  type="number"
+                  min="1"
+                  className="w-full p-3 bg-zinc-950 border border-zinc-800 rounded text-white focus:outline-none focus:border-[#D4AF37]"
+                  value={hourlyRate}
+                  onChange={(e) => setHourlyRate(e.target.value)}
+                />
+              </div>
+            </>
+          )}
+
           <div className="mb-4">
             <label className="block text-zinc-400 mb-2 text-sm">Skills</label>
             <div className="grid grid-cols-1 gap-2 bg-zinc-950 p-3 rounded border border-zinc-800 max-h-60 overflow-y-auto">
@@ -128,19 +247,55 @@ const Profile = ({ user, setUser }) => {
                 "Help Moving",
                 "Yardwork Service"
               ].map((skill) => (
-                <label key={skill} className="flex items-center space-x-3 cursor-pointer hover:bg-zinc-900 p-1 rounded">
-                  <input
-                    type="checkbox"
-                    value={skill}
-                    checked={skills.includes(skill)}
-                    onChange={handleSkillChange}
-                    className="w-4 h-4 accent-[#D4AF37] bg-zinc-800 border-zinc-600 rounded focus:ring-[#D4AF37]"
-                  />
-                  <span className="text-zinc-300 text-sm">{skill}</span>
-                </label>
+                <div key={skill} className="flex flex-col">
+                  <label className="flex items-center space-x-3 cursor-pointer hover:bg-zinc-900 p-1 rounded">
+                    <input
+                      type="checkbox"
+                      value={skill}
+                      checked={skills.includes(skill)}
+                      onChange={handleSkillChange}
+                      className="w-4 h-4 accent-[#D4AF37] bg-zinc-800 border-zinc-600 rounded focus:ring-[#D4AF37]"
+                    />
+                    <span className="text-zinc-300 text-sm">{skill}</span>
+                  </label>
+                  {user && user.role === 'tasker' && skills.includes(skill) && (
+                    <div className="ml-7 mt-2 mb-4 p-3 bg-zinc-800/50 rounded border border-zinc-800">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs text-zinc-400 w-20">Rate ($/hr):</span>
+                        <input
+                          type="number"
+                          min="1"
+                          value={skillRates[skill] || hourlyRate}
+                          onChange={(e) => handleSkillRateChange(skill, e.target.value)}
+                          className="w-24 p-1 bg-zinc-900 border border-zinc-700 rounded text-white text-xs focus:outline-none focus:border-[#D4AF37]"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-zinc-400 w-20">Work Photo:</span>
+                        {skillImages[skill] && (
+                          <img src={skillImages[skill]} alt={skill} className="w-8 h-8 rounded object-cover border border-zinc-600" />
+                        )}
+                        <input
+                          type="file"
+                          onChange={(e) => uploadSkillImageHandler(e, skill)}
+                          className="text-xs text-zinc-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:bg-zinc-700 file:text-white hover:file:bg-zinc-600 cursor-pointer"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>
+
+          {user && user.role === 'tasker' && (
+            <div className="mb-6 bg-zinc-950 p-3 rounded border border-zinc-800">
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input type="checkbox" className="mt-1 w-4 h-4 accent-[#D4AF37]" defaultChecked />
+                <span className="text-xs text-zinc-400">I acknowledge that I have read the training materials and agree to follow all safety guidelines while performing tasks.</span>
+              </label>
+            </div>
+          )}
 
           <div className="mb-8">
             <label className="block text-zinc-400 mb-2 text-sm">New Password</label>

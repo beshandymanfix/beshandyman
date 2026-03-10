@@ -31,7 +31,8 @@ const Login = ({ setUser }) => {
   return (
     <div className="flex justify-center items-center h-screen">
       <form onSubmit={submitHandler} className="bg-zinc-900 p-8 rounded-2xl shadow-2xl w-96 border border-zinc-800">
-        <h2 className="text-3xl mb-6 font-bold text-center text-white">Login</h2>
+        <h2 className="text-3xl mb-2 font-bold text-center text-white">Login</h2>
+        <p className="text-zinc-400 text-center mb-6 text-sm">Sign in as a Client or Tasker</p>
         {error && <p className="text-red-500 mb-4 text-sm text-center">{error}</p>}
         
         <div className="mb-4">

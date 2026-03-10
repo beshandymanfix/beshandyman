@@ -20,6 +20,11 @@ const userSchema = mongoose.Schema(
       required: true,
       default: false,
     },
+    role: {
+      type: String,
+      required: true,
+      default: 'client', // 'client' or 'tasker'
+    },
     city: {
     type: String,
     required: false,
@@ -31,7 +36,43 @@ const userSchema = mongoose.Schema(
     },
     profileImage: {
       type: String,
-      required: true,
+      required: false,
+      default: '',
+    },
+    state: {
+      type: String,
+      required: false,
+    },
+    hourlyRate: {
+      type: Number,
+      required: false,
+      default: 50,
+    },
+    skillRates: {
+      type: Map,
+      of: Number,
+      required: false,
+      default: {},
+    },
+    skillImages: {
+      type: Map,
+      of: String,
+      required: false,
+      default: {},
+    },
+    driverLicense: {
+      type: String,
+      required: false,
+      default: '',
+    },
+    isVerified: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    description: {
+      type: String,
+      required: false,
       default: '',
     },
     gallery: {
