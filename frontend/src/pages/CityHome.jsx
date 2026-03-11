@@ -35,6 +35,18 @@ export default function CityHome({ user, setUser }) {
     return (b.averageRating || 0) - (a.averageRating || 0);
   });
 
+  // Helper to format name for privacy (e.g. "Brian V.")
+  const formatPrivacyName = (handyman) => {
+    if (handyman.firstName && handyman.lastName) {
+      return `${handyman.firstName} ${handyman.lastName.charAt(0)}.`;
+    }
+    if (handyman.name) {
+      const parts = handyman.name.trim().split(/\s+/);
+      return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1].charAt(0)}.` : handyman.name;
+    }
+    return 'Tasker';
+  };
+
   // Local SEO Schema
   const jsonLd = {
     "@context": "https://schema.org",
@@ -86,7 +98,7 @@ export default function CityHome({ user, setUser }) {
                 Welcome, <span className="text-[#D4AF37]">{user.name}</span>
               </span>
               <Link 
-                to="/profile"
+                to={user.role === 'tasker' ? "/tasker-profile" : "/guest-profile"}
                 className="px-4 py-2 text-sm font-bold text-zinc-950 bg-[#D4AF37] rounded hover:bg-[#C5A028] transition-colors"
               >
                 Profile
@@ -150,7 +162,7 @@ export default function CityHome({ user, setUser }) {
                       <div className="flex justify-between items-start flex-wrap gap-4">
                         <div>
                           <Link to={`/handyman/${handyman._id}`} className="hover:underline decoration-[#D4AF37]">
-                            <h2 className="text-2xl font-bold text-white">{handyman.name}</h2>
+                            <h2 className="text-2xl font-bold text-white">{formatPrivacyName(handyman)}</h2>
                           </Link>
                           <div className="flex items-center gap-1 text-yellow-500 my-1">
                             {[...Array(5)].map((_, i) => (

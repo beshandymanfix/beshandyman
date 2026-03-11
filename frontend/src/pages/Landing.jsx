@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 const US_STATES = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia",
@@ -92,42 +94,7 @@ const Landing = ({ user, setUser }) => {
 
   return (
     <div className="min-h-screen bg-zinc-950 font-sans text-zinc-100 flex flex-col">
-      <nav className="flex items-center justify-between px-8 py-6 max-w-6xl mx-auto w-full border-b border-zinc-800">
-        <div className="flex items-center gap-3">
-          <img 
-            src="/beshandyman.jpg" 
-            alt="Bes Handyman Logo" 
-            className="h-12 w-auto object-contain rounded-md" 
-          />
-          <div className="text-2xl font-extrabold tracking-tight text-[#D4AF37]">
-            Bes<span className="text-white">Handyman</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-            {!user ? (
-                <>
-                <Link to="/login" className="text-zinc-300 hover:text-[#D4AF37] font-bold text-sm">Sign In</Link>
-                <Link to="/register" state={{ role: 'client' }} className="px-4 py-2 bg-[#D4AF37] text-zinc-950 font-bold rounded hover:bg-[#C5A028]">Register</Link>
-                </>
-            ) : (
-                <div className="flex items-center gap-4">
-                  <span className="hidden md:block font-medium text-zinc-300">
-                    Welcome, <span className="text-[#D4AF37]">{user.name}</span>
-                  </span>
-                  <Link to="/profile" className="px-4 py-2 bg-[#D4AF37] text-zinc-950 font-bold rounded hover:bg-[#C5A028]">Profile</Link>
-                  <button
-                    onClick={() => {
-                      localStorage.removeItem('userInfo');
-                      setUser(null);
-                    }}
-                    className="px-4 py-2 text-sm font-bold text-white border border-zinc-700 rounded hover:bg-zinc-800 transition-colors"
-                  >
-                    Logout
-                  </button>
-                </div>
-            )}
-        </div>
-      </nav>
+      <Header user={user} setUser={setUser} />
 
       <div className="flex-grow flex flex-col items-center justify-center text-center px-4">
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6">
@@ -214,6 +181,7 @@ const Landing = ({ user, setUser }) => {
           </div>
         </form>
       </div>
+      <Footer />
     </div>
   );
 };

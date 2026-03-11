@@ -1,5 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+
+const ALL_SERVICES = [
+  "Furniture Assembly",
+  "Home Cleaning",
+  "Home Repair",
+  "TV Mounting",
+  "Electrical Help",
+  "Painting",
+  "General Mounting",
+  "Help Moving",
+  "Yardwork Service"
+];
 
 const HandymanProfile = ({ user, setUser }) => {
   const { id } = useParams();
@@ -22,47 +36,54 @@ const HandymanProfile = ({ user, setUser }) => {
     return <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">Loading...</div>;
   }
 
+  // Helper to format name for privacy (e.g. "Brian V.")
+  const formatPrivacyName = (hm) => {
+    if (hm.firstName && hm.lastName) {
+      return `${hm.firstName} ${hm.lastName.charAt(0)}.`;
+    }
+    if (hm.name) {
+      const parts = hm.name.trim().split(/\s+/);
+      return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1].charAt(0)}.` : hm.name;
+    }
+    return 'Tasker';
+  };
+
+  // Helper to format city name (e.g. "san antonio" -> "San Antonio")
+  const formatCity = (city) => {
+    if (!city) return '';
+    return city.toLowerCase().split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 font-sans text-zinc-100">
       {/* Navigation */}
-      <nav className="flex items-center justify-between px-8 py-6 max-w-6xl mx-auto border-b border-zinc-800">
-        <div className="flex items-center gap-3">
-          <img 
-            src="/beshandyman.jpg" 
-            alt="Bes Handyman Logo" 
-            className="h-12 w-auto object-contain rounded-md" 
-          />
-          <div className="text-2xl font-extrabold tracking-tight text-[#D4AF37] hidden sm:block">
-            Bes<span className="text-white">Handyman</span>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <Link to="/" className="text-zinc-300 hover:text-[#D4AF37]">Back to Home</Link>
-          {user && (
-            <button
-              onClick={() => {
-                localStorage.removeItem('userInfo');
-                setUser(null);
-              }}
-              className="px-4 py-2 text-sm font-bold text-white border border-zinc-700 rounded hover:bg-zinc-800 transition-colors"
-            >
-              Logout
-            </button>
-          )}
-        </div>
-      </nav>
+      <Header user={user} setUser={setUser} />
 
       <div className="max-w-4xl mx-auto px-4 py-12">
         {/* Profile Header */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 shadow-xl mb-8">
           <div className="flex flex-col md:flex-row gap-8 items-start">
             <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-[#D4AF37] flex-shrink-0 mx-auto md:mx-0">
-              <img src={handyman.profileImage || "/brian.jpg"} alt={handyman.name} className="w-full h-full object-cover" />
+              <img src={handyman.profileImage || "/beshandyman.jpg"} alt={handyman.name} className="w-full h-full object-cover" />
             </div>
             
             <div className="flex-grow text-center md:text-left">
-              <h1 className="text-4xl font-bold text-white mb-2">{handyman.name}</h1>
+              <div className="flex flex-col md:flex-row items-center gap-3 mb-2 justify-center md:justify-start">
+                <h1 className="text-4xl font-bold text-white">{handyman.name}</h1>
+                {handyman.isVerified && (
+                  <span className="bg-green-900/30 text-green-400 border border-green-800 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                    ✓ Verified Tasker
+                  </span>
+                )}
+              </div>
+              {handyman.firstName && handyman.lastName && (
+                <p className="text-lg text-zinc-400 -mt-2 mb-2 text-center md:text-left">{handyman.firstName} {handyman.lastName}</p>
+              )}
+              {handyman.city && (
+                <div className="text-zinc-400 font-medium mb-4 flex items-center justify-center md:justify-start gap-1">📍 {formatCity(handyman.city)}</div>
+              )}
               <div className="flex items-center justify-center md:justify-start gap-2 text-yellow-500 mb-4">
                 <span className="text-xl">
                   {[...Array(5)].map((_, i) => (
@@ -73,7 +94,7 @@ const HandymanProfile = ({ user, setUser }) => {
               </div>
               <p className="text-zinc-300 text-lg leading-relaxed mb-6">
                 {/* Fallback description if none exists in DB yet */}
-                I am a skilled professional serving the {handyman.city || 'local'} area. I bring engineering precision and the right tools to get your job done correctly the first time.
+                {handyman.aboutMe || `I am a skilled professional serving the ${formatCity(handyman.city) || 'local'} area. I bring engineering precision and the right tools to get your job done correctly the first time.`}
               </p>
               
               <div className="flex flex-wrap gap-3 justify-center md:justify-start">
@@ -90,7 +111,7 @@ const HandymanProfile = ({ user, setUser }) => {
               <div className="bg-zinc-950 p-6 rounded-xl border border-zinc-800 text-center">
                 <div className="text-3xl font-bold text-white mb-1">${handyman.hourlyRate || 50}<span className="text-sm text-zinc-500 font-normal">/hr</span></div>
                 {user && user._id === handyman._id ? (
-                  <Link to="/profile" className="block w-full mt-4 bg-zinc-800 text-white font-bold px-8 py-3 rounded-lg hover:bg-zinc-700 transition-colors text-center">
+                  <Link to="/tasker-profile" className="block w-full mt-4 bg-zinc-800 text-white font-bold px-8 py-3 rounded-lg hover:bg-zinc-700 transition-colors text-center">
                     Edit Profile
                   </Link>
                 ) : (
@@ -114,9 +135,9 @@ const HandymanProfile = ({ user, setUser }) => {
                     <Link key={index} to={`/handyman/${handyman._id}/skill/${encodeURIComponent(skill)}`} className="block hover:bg-zinc-800/30 transition-colors rounded-xl">
                       <div className="flex items-start gap-4 p-4 bg-zinc-950/50 rounded-xl border border-zinc-800/50">
                         <div className="flex-shrink-0">
-                          {handyman.skillImages && handyman.skillImages[skill] ? (
+                          {handyman.skillImages && handyman.skillImages[skill] && handyman.skillImages[skill].length > 0 ? (
                             <img 
-                              src={handyman.skillImages[skill]} 
+                              src={handyman.skillImages[skill][0]} 
                               alt={skill} 
                               className="w-20 h-20 rounded-lg object-cover border border-zinc-700"
                             />
@@ -191,7 +212,44 @@ const HandymanProfile = ({ user, setUser }) => {
             <p className="text-zinc-500">No reviews yet.</p>
           )}
         </div>
+
+        {/* Service Availability Grid (Can Do vs Can't Do) */}
+        <div className="mt-12 pt-12 border-t border-zinc-800">
+          <h2 className="text-2xl font-bold text-white mb-6">Service Availability</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {ALL_SERVICES.map(service => {
+              const isOffered = handyman.skills && handyman.skills.includes(service);
+              // Use specific skill rate if available, otherwise fallback to base hourly rate
+              const rate = (handyman.skillRates && handyman.skillRates[service]) || handyman.hourlyRate || 50;
+              
+              return (
+                <div key={service} className={`p-4 rounded-xl border flex flex-col justify-between h-full ${isOffered ? 'bg-zinc-900 border-zinc-700' : 'bg-zinc-950/30 border-zinc-800/50 opacity-60'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`font-medium ${isOffered ? 'text-zinc-200' : 'text-zinc-500'}`}>{service}</span>
+                    {isOffered ? (
+                      <span className="text-green-500 text-lg">✓</span>
+                    ) : (
+                      <span className="text-red-900 text-lg">✗</span>
+                    )}
+                  </div>
+                  {isOffered ? (
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-800">
+                      <span className="text-xs text-zinc-400">Rate</span>
+                      <span className="text-[#D4AF37] font-bold">${rate}/hr</span>
+                    </div>
+                  ) : (
+                    <div className="mt-2 pt-2 border-t border-zinc-800/50">
+                      <span className="text-xs text-zinc-600 italic">Not available</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
+
+      <Footer />
     </div>
   );
 };

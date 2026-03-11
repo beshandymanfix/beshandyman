@@ -130,7 +130,7 @@ export default function Home({ user }) {
                {/* The actual image container */}
               <div className="relative w-40 h-40 sm:w-52 sm:h-52 rounded-full overflow-hidden border-[5px] border-yellow-500 shadow-xl bg-neutral-800">
                 <img
-                  src="/brian.jpg" 
+                  src="/beshandyman.jpg" 
                   alt="Bes Handyman Profile"
                   className="w-full h-full object-cover"
                 />

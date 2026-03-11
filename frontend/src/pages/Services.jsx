@@ -115,7 +115,7 @@ const Services = ({ user, setUser }) => {
                 </>
             ) : (
                 <div className="flex items-center gap-4">
-                  <Link to="/profile" className="px-4 py-2 bg-[#D4AF37] text-zinc-950 font-bold rounded hover:bg-[#C5A028]">Profile</Link>
+                  <Link to={user.role === 'tasker' ? "/tasker-profile" : "/guest-profile"} className="px-4 py-2 bg-[#D4AF37] text-zinc-950 font-bold rounded hover:bg-[#C5A028]">Profile</Link>
                   <button
                     onClick={() => {
                       localStorage.removeItem('userInfo');

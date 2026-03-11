@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
 
 const Profile = ({ user, setUser }) => {
   const [name, setName] = useState('');
@@ -8,12 +10,15 @@ const Profile = ({ user, setUser }) => {
   const [skills, setSkills] = useState([]);
   const [profileImage, setProfileImage] = useState('');
   const [password, setPassword] = useState('');
+  const [address, setAddress] = useState('');
   const [message, setMessage] = useState('');
+  const [isError, setIsError] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [description, setDescription] = useState('');
   const [hourlyRate, setHourlyRate] = useState(0);
   const [skillRates, setSkillRates] = useState({});
   const [skillImages, setSkillImages] = useState({});
+  const [gallery, setGallery] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,10 +28,12 @@ const Profile = ({ user, setUser }) => {
       setCity(user.city || '');
       setSkills(user.skills || []);
       setProfileImage(user.profileImage || '');
+      setAddress(user.address || '');
       setDescription(user.description || '');
       setHourlyRate(user.hourlyRate || 0);
       setSkillRates(user.skillRates || {});
       setSkillImages(user.skillImages || {});
+      setGallery(user.gallery || []);
     }
   }, [user]);
 
@@ -61,10 +68,12 @@ const Profile = ({ user, setUser }) => {
         setUploading(false);
       } else {
         setUploading(false);
+        setIsError(true);
         setMessage('Image upload failed');
       }
     } catch (err) {
       setUploading(false);
+      setIsError(true);
       setMessage('Image upload failed');
     }
   };
@@ -88,11 +97,42 @@ const Profile = ({ user, setUser }) => {
         setUploading(false);
       } else {
         setUploading(false);
+        setIsError(true);
         setMessage('Skill image upload failed');
       }
     } catch (err) {
       setUploading(false);
+      setIsError(true);
       setMessage('Skill image upload failed');
+    }
+  };
+
+  const uploadGalleryHandler = async (e) => {
+    const files = e.target.files;
+    if (gallery.length + files.length > 5) {
+      setIsError(true);
+      setMessage('Max 5 pictures allowed in gallery');
+      return;
+    }
+    setUploading(true);
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const formData = new FormData();
+        formData.append('image', files[i]);
+        const res = await fetch('http://localhost:5000/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        if (res.ok) {
+          const data = await res.text();
+          setGallery((prev) => [...prev, data]);
+        }
+      }
+      setUploading(false);
+    } catch (err) {
+      setUploading(false);
+      setIsError(true);
+      setMessage('Gallery upload failed');
     }
   };
 
@@ -105,7 +145,7 @@ const Profile = ({ user, setUser }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token}`
         },
-        body: JSON.stringify({ name, email, password, city, skills, profileImage, description, hourlyRate, skillRates, skillImages }),
+        body: JSON.stringify({ name, email, password, city, address, skills, profileImage, description, hourlyRate, skillRates, skillImages, gallery }),
       });
       
       const data = await res.json();
@@ -113,12 +153,15 @@ const Profile = ({ user, setUser }) => {
       if (res.ok) {
         localStorage.setItem('userInfo', JSON.stringify(data));
         setUser(data);
+        setIsError(false);
         setMessage('Profile Updated Successfully');
         setPassword('');
 
         // Redirect after a short delay to show the success message
         setTimeout(() => {
-          if (data.city) {
+          if (data.role === 'tasker') {
+            navigate(`/handyman/${data._id}`);
+          } else if (data.city) {
             navigate(`/city/${encodeURIComponent(data.city)}`);
           } else {
             // If no city is selected, just clear the message
@@ -126,9 +169,11 @@ const Profile = ({ user, setUser }) => {
           }
         }, 1500); // 1.5 second delay
       } else {
+        setIsError(true);
         setMessage(data.message || 'Error updating profile');
       }
     } catch (err) {
+      setIsError(true);
       setMessage('Something went wrong');
     }
   };
@@ -139,13 +184,15 @@ const Profile = ({ user, setUser }) => {
   };
 
   return (
-    <div className="flex flex-col items-center pt-10">
-      <div className="bg-zinc-900 p-8 rounded-2xl shadow-2xl w-96 border border-zinc-800">
+    <div className="min-h-screen bg-zinc-950 font-sans text-zinc-100 flex flex-col justify-between">
+      <Header user={user} setUser={setUser} />
+      <div className="flex flex-col items-center pt-10 pb-20">
+        <div className="bg-zinc-900 p-8 rounded-2xl shadow-2xl w-96 border border-zinc-800">
         <div className="flex flex-col items-center mb-6">
           <div className="text-5xl mb-2">👤</div>
-          <h2 className="text-3xl font-bold text-center text-white">User Profile</h2>
+          <h2 className="text-3xl font-bold text-center text-white">{user && user.role === 'tasker' ? 'Tasker Profile' : 'Client Profile'}</h2>
         </div>
-        {message && <p className="text-green-500 mb-4 text-center text-sm">{message}</p>}
+        {message && <p className={`${isError ? 'text-red-500' : 'text-green-500'} mb-4 text-center text-sm`}>{message}</p>}
         
         <form onSubmit={submitHandler}>
           <div className="mb-6">
@@ -190,6 +237,18 @@ const Profile = ({ user, setUser }) => {
             />
           </div>
 
+          {user && user.role === 'guest' && (
+            <div className="mb-4">
+              <label className="block text-zinc-400 mb-2 text-sm">Address</label>
+              <input
+                type="text"
+                className="w-full p-3 bg-zinc-950 border border-zinc-800 rounded text-white focus:outline-none focus:border-[#D4AF37]"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+              />
+            </div>
+          )}
+
           <div className="mb-4">
             <label className="block text-zinc-400 mb-2 text-sm">Preferred City</label>
             <select
@@ -210,25 +269,34 @@ const Profile = ({ user, setUser }) => {
           {user && user.role === 'tasker' && (
             <>
               <div className="mb-4">
-                <label className="block text-zinc-400 mb-2 text-sm">About You</label>
+                <label className="block text-zinc-400 mb-2 text-sm">About You <span className="text-red-500">*</span></label>
                 <textarea
                   rows="3"
                   className="w-full p-3 bg-zinc-950 border border-zinc-800 rounded text-white focus:outline-none focus:border-[#D4AF37]"
                   placeholder="Describe your experience..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  required
                 />
               </div>
 
               <div className="mb-4">
-                <label className="block text-zinc-400 mb-2 text-sm">Base Hourly Rate ($)</label>
-                <input
-                  type="number"
-                  min="1"
-                  className="w-full p-3 bg-zinc-950 border border-zinc-800 rounded text-white focus:outline-none focus:border-[#D4AF37]"
-                  value={hourlyRate}
-                  onChange={(e) => setHourlyRate(e.target.value)}
-                />
+                <label className="block text-zinc-400 mb-2 text-sm">Work Gallery (max 5 pictures)</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {gallery.map((img, index) => (
+                    <div key={index} className="w-16 h-16 border border-zinc-700 rounded overflow-hidden">
+                      <img src={img} alt="Work" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+                {gallery.length < 5 && (
+                  <input
+                    type="file"
+                    multiple
+                    onChange={uploadGalleryHandler}
+                    className="block w-full text-sm text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#D4AF37] file:text-zinc-950 hover:file:bg-[#C5A028] cursor-pointer"
+                  />
+                )}
               </div>
             </>
           )}
@@ -292,7 +360,7 @@ const Profile = ({ user, setUser }) => {
             <div className="mb-6 bg-zinc-950 p-3 rounded border border-zinc-800">
               <label className="flex items-start gap-2 cursor-pointer">
                 <input type="checkbox" className="mt-1 w-4 h-4 accent-[#D4AF37]" defaultChecked />
-                <span className="text-xs text-zinc-400">I acknowledge that I have read the training materials and agree to follow all safety guidelines while performing tasks.</span>
+                <span className="text-xs text-zinc-400">I acknowledge that I have read the training materials and agree to follow all safety guidelines while performing tasks. <span className="text-red-500">*</span></span>
               </label>
             </div>
           )}
@@ -320,6 +388,9 @@ const Profile = ({ user, setUser }) => {
           Logout
         </button>
       </div>
+      </div>
+
+      <Footer />
     </div>
   );
 };

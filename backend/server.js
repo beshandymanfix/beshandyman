@@ -2,9 +2,9 @@ const express = require('express');
 const dotenv = require('dotenv');
 const path = require('path');
 const cors = require('cors');
-const connectDB = require('./db');
-const User = require('./models/User');
-const Review = require('./models/Review');
+const { connectDB, Tasker, Guest, Review } = require('./db');
+// You can eventually remove the old User import below if you fully migrate to Tasker/Guest
+const User = require('./models/User'); 
 const generateToken = require('./utils/generateToken');
 const { protect } = require('./middleware/authMiddleware');
 const { S3Client } = require('@aws-sdk/client-s3');
@@ -57,6 +57,30 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
   res.send(req.file.location);
 });
 
+// Create a Review (Guests Only)
+app.post('/api/reviews', protect, async (req, res) => {
+  const { taskerId, rating, comment, service } = req.body;
+
+  try {
+    // Ensure the logged-in user is a Guest
+    if (req.user.role !== 'guest') {
+      return res.status(403).json({ message: 'Only guests can leave reviews' });
+    }
+
+    const review = await Review.create({
+      tasker: taskerId,
+      guest: req.user._id,
+      rating,
+      comment,
+      service
+    });
+
+    res.status(201).json(review);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
@@ -74,13 +98,13 @@ app.get('/api/users', async (req, res) => {
   }
 
   try {
-    const users = await User.find(query).select('-password');
+    const users = await Tasker.find(query).select('-password');
     
     const usersWithStats = await Promise.all(users.map(async (user) => {
       const userObj = user.toObject();
       
       // Fetch all reviews to calculate stats
-      const reviews = await Review.find({ handyman: user._id });
+      const reviews = await Review.find({ tasker: user._id });
       const totalReviews = reviews.length;
       userObj.totalReviews = totalReviews;
       
@@ -108,46 +132,66 @@ app.get('/api/users', async (req, res) => {
 });
 
 app.post('/api/users', async (req, res) => {
-  const { name, email, password, skills, profileImage, gallery, role, description, skillImages } = req.body;
+  const { name, email, password, skills, profileImage, gallery, role, aboutMe, skillImages, city, state, driverLicense, trainingAcknowledged } = req.body;
 
   try {
-    const userExists = await User.findOne({ email });
+    // Determine collection based on role
+    let userExists;
+    if (role === 'tasker') {
+      userExists = await Tasker.findOne({ email });
+    } else {
+      userExists = await Guest.findOne({ email });
+    }
 
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const user = await User.create({
-      name,
+    let user;
+    if (role === 'tasker') {
+      user = await Tasker.create({
+      fullName: name,
       email,
       password,
+      city,
+      state,
+      driverLicense: driverLicense || [], // Expecting array of URLs [front, back]
       skills: skills || [],
-      profileImage: profileImage || '',
+      role: 'tasker',
+      aboutMe: aboutMe || '',
       gallery: gallery || [],
-      role: role || 'client',
-      description: description || '',
-      skillImages: skillImages || {},
-    });
+      profileImage: profileImage || '',
+      trainingAcknowledged: trainingAcknowledged || false,
+      isVerified: false, // Default to false until approved
+      // hourlyRate: 50 // Removed default so it is optional
+      });
+    } else {
+      user = await Guest.create({
+        fullName: name,
+        email,
+        password,
+        role: 'guest'
+      });
+    }
 
     if (user) {
-      res.status(201).json({
+      const response = {
         _id: user._id,
-        name: user.name,
+        name: user.fullName,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
-        skills: user.skills,
-        profileImage: user.profileImage,
-        gallery: user.gallery,
         role: user.role,
-        state: user.state,
-        hourlyRate: user.hourlyRate,
-        skillRates: user.skillRates,
-        driverLicense: user.driverLicense,
-        isVerified: user.isVerified,
-        isAdmin: user.isAdmin,
-        description: user.description,
-        skillImages: user.skillImages,
         token: generateToken(user._id),
-      });
+      };
+
+      // If user is a Tasker, send the specific approval message
+      if (user.role === 'tasker') {
+        response.isVerified = user.isVerified;
+        response.message = "Please confirm with your email before next process identify security and check background for all taskers";
+      }
+
+      res.status(201).json(response);
     } else {
       res.status(400).json({ message: 'Invalid user data' });
     }
@@ -160,25 +204,23 @@ app.post('/api/users/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ email });
+    // Check Tasker collection first
+    let user = await Tasker.findOne({ email });
+    
+    // If not found, check Guest collection
+    if (!user) {
+      user = await Guest.findOne({ email });
+    }
 
     if (user && user.password === password) {
       res.json({
         _id: user._id,
-        name: user.name,
+        name: user.fullName,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
-        skills: user.skills,
-        profileImage: user.profileImage,
-        gallery: user.gallery,
         role: user.role,
-        state: user.state,
-        hourlyRate: user.hourlyRate,
-        skillRates: user.skillRates,
-        driverLicense: user.driverLicense,
         isVerified: user.isVerified,
-        isAdmin: user.isAdmin,
-        description: user.description,
-        skillImages: user.skillImages,
         token: generateToken(user._id),
       });
     } else {
@@ -190,12 +232,15 @@ app.post('/api/users/login', async (req, res) => {
 });
 
 app.get('/api/users/profile', protect, async (req, res) => {
-  const user = await User.findById(req.user._id);
+  // Use the model constructor from the logged-in user (Tasker or Guest)
+  const user = await req.user.constructor.findById(req.user._id);
 
   if (user) {
     res.json({
       _id: user._id,
-      name: user.name,
+      name: user.fullName || user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
       email: user.email,
       skills: user.skills,
       profileImage: user.profileImage,
@@ -207,8 +252,11 @@ app.get('/api/users/profile', protect, async (req, res) => {
       driverLicense: user.driverLicense,
       isVerified: user.isVerified,
       isAdmin: user.isAdmin,
-      description: user.description,
+      aboutMe: user.aboutMe,
       skillImages: user.skillImages,
+      skillDescriptions: user.skillDescriptions,
+      skillYears: user.skillYears,
+      skillLevels: user.skillLevels,
     });
   } else {
     res.status(404).json({ message: 'User not found' });
@@ -216,10 +264,27 @@ app.get('/api/users/profile', protect, async (req, res) => {
 });
 
 app.put('/api/users/profile', protect, async (req, res) => {
-  const user = await User.findById(req.user._id);
+  // Use the model constructor from the logged-in user (Tasker or Guest)
+  const user = await req.user.constructor.findById(req.user._id);
 
   if (user) {
-    user.name = req.body.name || user.name;
+    if (req.body.name) {
+      if (req.body.name !== user.fullName) {
+        const taskerExists = await Tasker.findOne({ fullName: req.body.name });
+        const guestExists = await Guest.findOne({ fullName: req.body.name });
+        if (taskerExists || guestExists) {
+          return res.status(400).json({ message: 'Username already taken' });
+        }
+      }
+      user.name = req.body.name;
+      user.fullName = req.body.name;
+    }
+    if (req.body.firstName !== undefined) {
+      user.firstName = req.body.firstName;
+    }
+    if (req.body.lastName !== undefined) {
+      user.lastName = req.body.lastName;
+    }
     user.email = req.body.email || user.email;
     if (req.body.password) {
       user.password = req.body.password;
@@ -229,6 +294,9 @@ app.put('/api/users/profile', protect, async (req, res) => {
     }
     if (req.body.skills !== undefined) {
       user.skills = req.body.skills;
+    }
+    if (req.body.address) {
+      user.address = req.body.address;
     }
     if (req.body.profileImage !== undefined) {
       user.profileImage = req.body.profileImage;
@@ -251,18 +319,29 @@ app.put('/api/users/profile', protect, async (req, res) => {
     if (req.body.isVerified !== undefined) {
       user.isVerified = req.body.isVerified;
     }
-    if (req.body.description !== undefined) {
-      user.description = req.body.description;
+    if (req.body.aboutMe !== undefined) {
+      user.aboutMe = req.body.aboutMe;
     }
     if (req.body.skillImages) {
       user.skillImages = req.body.skillImages;
+    }
+    if (req.body.skillDescriptions) {
+      user.skillDescriptions = req.body.skillDescriptions;
+    }
+    if (req.body.skillYears) {
+      user.skillYears = req.body.skillYears;
+    }
+    if (req.body.skillLevels) {
+      user.skillLevels = req.body.skillLevels;
     }
 
     const updatedUser = await user.save();
 
     res.json({
       _id: updatedUser._id,
-      name: updatedUser.name,
+      name: updatedUser.fullName || updatedUser.name,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
       email: updatedUser.email,
       city: updatedUser.city,
       skills: updatedUser.skills,
@@ -275,8 +354,11 @@ app.put('/api/users/profile', protect, async (req, res) => {
       driverLicense: updatedUser.driverLicense,
       isVerified: updatedUser.isVerified,
       isAdmin: updatedUser.isAdmin,
-      description: updatedUser.description,
+      aboutMe: updatedUser.aboutMe,
       skillImages: updatedUser.skillImages,
+      skillDescriptions: updatedUser.skillDescriptions,
+      skillYears: updatedUser.skillYears,
+      skillLevels: updatedUser.skillLevels,
       token: generateToken(updatedUser._id),
     });
   } else {
@@ -286,12 +368,13 @@ app.put('/api/users/profile', protect, async (req, res) => {
 
 app.get('/api/users/:id', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
+    const user = await Tasker.findById(req.params.id).select('-password');
     if (user) {
       const userObj = user.toObject();
+      userObj.name = userObj.fullName || userObj.name;
       
       // Fetch reviews for this user
-      const reviews = await Review.find({ handyman: user._id }).sort({ createdAt: -1 });
+      const reviews = await Review.find({ tasker: user._id }).sort({ createdAt: -1 });
       userObj.reviews = reviews;
       userObj.totalReviews = reviews.length;
       

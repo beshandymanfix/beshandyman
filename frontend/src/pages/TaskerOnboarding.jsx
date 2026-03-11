@@ -23,7 +23,7 @@ const TaskerOnboarding = ({ user, setUser }) => {
   const [driverLicense, setDriverLicense] = useState('');
   const [hourlyRate, setHourlyRate] = useState(20);
   const [skillRates, setSkillRates] = useState({});
-  const [description, setDescription] = useState('');
+  const [aboutMe, setAboutMe] = useState('');
   const [safetyAck, setSafetyAck] = useState(false);
   const [gallery, setGallery] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -37,7 +37,7 @@ const TaskerOnboarding = ({ user, setUser }) => {
       setDriverLicense(user.driverLicense || '');
       setHourlyRate(user.hourlyRate || 20);
       setSkillRates(user.skillRates || {});
-      setDescription(user.description || '');
+      setAboutMe(user.aboutMe || '');
       setGallery(user.gallery || []);
     }
   }, [user]);
@@ -117,7 +117,7 @@ const TaskerOnboarding = ({ user, setUser }) => {
           driverLicense, 
           hourlyRate, 
           skillRates,
-          description,
+          aboutMe,
           gallery,
           isVerified: true // Simulating verification for now
         }),
@@ -283,8 +283,8 @@ const TaskerOnboarding = ({ user, setUser }) => {
                 rows="4"
                 placeholder="Describe your experience, skills, and what makes you impressive to clients..."
                 className="w-full p-3 bg-zinc-950 border border-zinc-800 rounded text-white focus:outline-none focus:border-[#D4AF37]"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                value={aboutMe}
+                onChange={(e) => setAboutMe(e.target.value)}
               />
             </div>
 
@@ -318,7 +318,7 @@ const TaskerOnboarding = ({ user, setUser }) => {
               <button onClick={() => setStep(2)} className="flex-1 bg-zinc-800 text-white font-bold p-3 rounded hover:bg-zinc-700">Back</button>
               <button 
                 onClick={submitHandler} 
-                disabled={!safetyAck || !description}
+                disabled={!safetyAck || !aboutMe}
                 className="flex-1 bg-[#D4AF37] text-zinc-950 font-bold p-3 rounded hover:bg-[#C5A028] disabled:opacity-50 disabled:cursor-not-allowed">
                 Complete Registration
               </button>
@@ -334,7 +334,7 @@ const TaskerOnboarding = ({ user, setUser }) => {
               You are now a verified BesHandyman Tasker. You can now start accepting jobs in {city}.
             </p>
             <button 
-              onClick={() => navigate('/profile')} 
+              onClick={() => navigate('/tasker-profile')} 
               className="bg-[#D4AF37] text-zinc-950 font-bold px-8 py-3 rounded-lg hover:bg-[#C5A028] transition-colors"
             >
               Go to Dashboard

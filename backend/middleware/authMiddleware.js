@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const { Tasker, Guest } = require('../db');
 
 const protect = async (req, res, next) => {
   let token;
@@ -16,7 +16,13 @@ const protect = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
       // Get user from the token
-      req.user = await User.findById(decoded.id).select('-password');
+      // Try finding the user in Tasker collection first
+      req.user = await Tasker.findById(decoded.id).select('-password');
+
+      // If not found in Tasker, check Guest collection
+      if (!req.user) {
+        req.user = await Guest.findById(decoded.id).select('-password');
+      }
 
       next();
     } catch (error) {
