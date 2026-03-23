@@ -1,6 +1,6 @@
 self.__BUILD_MANIFEST = {
-  "/": [
-    "static/chunks/pages/index.js"
+  "/_error": [
+    "static/chunks/pages/_error.js"
   ],
   "__rewrites": {
     "afterFiles": [],
@@ -8,11 +8,11 @@ self.__BUILD_MANIFEST = {
     "fallback": []
   },
   "sortedPages": [
-    "/",
     "/CityHome",
     "/GuestProfile",
     "/HandymanProfile",
-    "/Home2",
+    "/Home",
+    "/Landing",
     "/Login",
     "/NewPage",
     "/Register",

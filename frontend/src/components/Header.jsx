@@ -1,13 +1,15 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+'use client';
+
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const Header = ({ user, setUser }) => {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const logoutHandler = () => {
     localStorage.removeItem('userInfo');
     setUser(null);
-    navigate('/');
+    router.push('/');
   };
 
   return (
@@ -38,14 +40,14 @@ const Header = ({ user, setUser }) => {
             {/* Main Action Button based on Role */}
             {user.role === 'tasker' ? (
               <Link 
-                to="/tasker-profile"
+                href="/tasker-profile"
                 className="px-4 py-2 text-sm font-bold text-zinc-950 bg-[#D4AF37] rounded hover:bg-[#C5A028] transition-colors"
               >
                 Tasker Profile
               </Link>
             ) : (
               <Link 
-                to="/"
+                href="/"
                 className="px-4 py-2 text-sm font-bold text-zinc-950 bg-[#D4AF37] rounded hover:bg-[#C5A028] transition-colors"
               >
                 Hire a Pro
@@ -54,7 +56,7 @@ const Header = ({ user, setUser }) => {
 
             {/* Secondary Links */}
             {user.role === 'guest' && (
-              <Link to="/guest-profile" className="text-sm font-medium text-zinc-300 hover:text-[#D4AF37] transition-colors">
+              <Link href="/guest-profile" className="text-sm font-medium text-zinc-300 hover:text-[#D4AF37] transition-colors">
                 Account
               </Link>
             )}
@@ -69,13 +71,13 @@ const Header = ({ user, setUser }) => {
         ) : (
           <>
             <Link 
-              to="/login"
+              href="/login"
               className="px-4 py-2 text-sm font-bold text-zinc-950 bg-[#D4AF37] rounded hover:bg-[#C5A028] transition-colors"
             >
               Sign In
             </Link>
             <Link 
-              to="/register"
+              href="/register"
               className="px-4 py-2 text-sm font-bold text-[#D4AF37] border border-[#D4AF37] rounded hover:bg-[#D4AF37] hover:text-zinc-950 transition-colors"
             >
               Register

@@ -1,11 +1,1 @@
-{
-  "version": 4,
-  "routes": {},
-  "dynamicRoutes": {},
-  "notFoundRoutes": [],
-  "preview": {
-    "previewModeId": "7e90e87baa4ef7e0f07816efdca5e228",
-    "previewModeSigningKey": "4139bd474a99610a8eebcebcea416a6ab89c3a7634a4357b011b66886ba1c3d1",
-    "previewModeEncryptionKey": "1a7bc78598417538df0249070161f940743d07a56f914bc9b5569c452a34bef6"
-  }
-}
+{"version":4,"routes":{"/city/San Antonio":{},"/city/Austin":{},"/city/New Braunfels":{},"/city/Kyle":{},"/city/Buda":{},"/city/San Marcos":{}},"dynamicRoutes":{"/city/[cityName]":{"dataRoute":null,"dataRouteRegex":null,"fallback":null,"fallbackRevalidate":false,"fallbackSourceRoute":"/city/[cityName]","routeRegex":"^\\/city\\/([^/]+?)(?:\\/)?$","allowHeader":[]}},"notFoundRoutes":[],"preview":{"previewModeId":"eb789fe28dca8341def4cdb7d7df8d26","previewModeSigningKey":"47037e2cc99ddff61368314f723ec1eb085cf05ecdfbb1dcf915e41651680933","previewModeEncryptionKey":"7ff05483c4b6d1c5bd8b0d7df7f4e53e80da9fd3619603a0bc2b7ef3b075fa23"}}
