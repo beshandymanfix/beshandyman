@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Forces the creation of the static "out" folder
-  output: 'export',
+  // Removed to allow dynamic database routes like /handyman/[id] to work automatically
+  // output: 'export',
   
   // Required for GitHub Pages
   images: {
