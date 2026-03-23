@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { useUser } from '../../context/UserContext';
 
-export default function Register() {
+// 1. Move all the logic into a child component
+function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, setUser } = useUser();
@@ -16,7 +17,7 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  // Replaces useLocation.state: gets the initial role from the query params, e.g., ?role=tasker
+  // Extracts the role from the URL, e.g., ?role=tasker
   const [role, setRole] = useState(searchParams.get('role') || 'client'); 
   const [profileImage, setProfileImage] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -176,5 +177,14 @@ export default function Register() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+// 2. Wrap the component in Suspense for the default export
+export default function Register() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-zinc-950 flex items-center justify-center text-white">Loading registration...</div>}>
+      <RegisterForm />
+    </Suspense>
   );
 }
