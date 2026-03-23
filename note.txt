@@ -1,1 +1,12 @@
-hi againn
+The Ideal Architecture for Your Stack
+
+PM2 = Process Manager 2
+EC2 = Elastic Compute Cloud
+
+1. cloudflare: point to your EC2 IP address
+
+2. AWS EC2" Runs your next.js app continuosly using PM2 
+
+3. MongoDB/S3: Your Next.js app connects to these via standard env variables. 
+
+Why it's good: Extremely fast Server-Side Rendering (great for SEO), highly predictable, and cheap to start.
